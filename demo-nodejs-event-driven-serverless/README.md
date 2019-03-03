@@ -1,12 +1,12 @@
-# demo-nodejs-hello-express-serverless
-Proyecto que Muestra un mensaje "Hello World" ("Todo un clásico de cualquier desarrollo" :-) ) junto a información del evento que lo desencadeno a través de una petición REST (evento HTTP)
-a traves del framework de aplicaciones web Express
+# demo-nodejs-event-driven-serverless
+Proyecto "Hello World!" en modo Event Driven en una petición REST
 
 ## Stack Tecnológico
 
 * Node.js (https://nodejs.org)
 * Serverless Framework (https://serverless.com/)
-* Express(http://expressjs.com/)
+
+Destaca por montar un modulo de gestión de eventos : event
 
 ## Prerrequisitos
 
@@ -19,6 +19,12 @@ Recomendación de elementos extra a instalar :
 * Visual Studio Code: https://code.visualstudio.com/
 * nvm: https://github.com/creationix/nvm
 * npm: https://www.npmjs.com/ (ver. 6.5.0)
+
+
+Recomendación de elementos extra a instalar :
+- Visual Studio Code: https://code.visualstudio.com/
+- nvm: https://github.com/creationix/nvm
+- npm: https://www.npmjs.com/ (ver. 6.5.0)
 
 ## Instalación
 
@@ -42,7 +48,8 @@ Específicos
 
 Este proyecto sigue los pasos básicos de construcción
 
-1. Creación de un directorio para el proyecto : **demo-nodejs-hello-express-serverless**
+
+1. Creación de un directorio para el proyecto : **demo-nodejs-event-driven-serverless**
 2. Ubicarse dentro de este directorio
 3. Ejecutar el comando de creación de un arquetipo básico 
 
@@ -54,7 +61,7 @@ npm init -y
 
 ``` js
 {
-  "name": "demo-nodejs-hello-express-serverless",
+  "name": "demo-nodejs-event-driven-serverless",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -70,8 +77,6 @@ npm init -y
 5. Crear directorios tipo (opcional)
 
 * "src" : para incluir el código fuente
-
-
 
 ## Preparación del proyecto 
 
@@ -102,51 +107,6 @@ Verificar que se genera el fichero "package-lock.json" y el directorio "node_mod
 $ npm run node:version
 ```
 
-### Instalación de dependencias iniciales 
-
-Instalar las siguientes dependencias :
-
-* **[express](https://www.npmjs.com/package/express)** : Framework para aplicaciones web en node
-
-* **[serverless-http](https://www.npmjs.com/search?q=serverless-http)** : Permite crear un wrap para eluso de un API para uso serverless
-
-* **[cross-env](https://www.npmjs.com/package/cross-env)** : Facilita trabajar con variables de entorno en diferentes plataformas
-
-Fichero 'package.json':
-
-``` js
-"dependencies": {
-    "express": "^4.16.4",
-    "serverless-http": "^1.9.1"
-  },
-"devDependencies": {
-    "cross-env": "5.2.0"
-  } 
-```
-
-Añadir la tarea 'package.json':
-
-``` js
-"scripts": {
-  ...
-    "profile:local": "cross-env-shell NODE_ENV=local",
-  ...
-  },
-```
-**profile:local** :  Permite crear/sobreescribir una variable de entorno con el valor indicado
-
-En este caso facilitaría ciertas configuración para el entorno "local"
-
-``` bash
-$ npm run profile:local
-```
-
-Por último ejecutar la carga de las dependencias añadidas
-
-```bash
-$ npm run clean
-```
-
 ### Instalar y Configurar Serverless Framework
 
 Seguir el documento **workspace-serverless-framework-lab/doc/README-instalacion-configuracion-serverless.md**
@@ -158,22 +118,23 @@ El cliente Serverless funciona a partir de la existencia de un fichero serverles
 
 Se ubica en el directorio raiz del proyecto y tiene un formato como el siguiente :
 
-serverless.yml
+
+Se ubica en el directorio raiz del proyecto y tiene un formato como el siguiente
+
 ```js
 service: 
-  name: demo-nodejs-hello-express-serverless
-
-custom:
-  serverless-offline:
-    port: 3000
+  name: demo-nodejs-event-driven-serverless
 
 provider:
   name: aws
   runtime: nodejs8.10
 
-functions:
-  ...
-
+event:
+    handler: src/handler.createEvent
+    events:
+      - http:
+          path: create-event
+          method: get
 ```
 
 ### Instalar y Configurar Serverless Offline
@@ -181,41 +142,53 @@ functions:
 Seguir el documento **workspace-serverless-framework-lab/doc/README-instalacion-configuracion-serverless-offline.md**
 
 
+
 ### Creación del proyecto
 
-Se tiene que crear una clase manejadora (por ejemplo : app.js) y una función de invocación facilitada por express : req, res, next
+Se ha generado un modulo dentro del directorio src/ con toda la operativa relacionada con la generación de un evento generico
+
+Se ha definido un manejador para gestionar una petición REST y generar un evento
+
+Se tiene que crear una clase manejadora (por ejemplo : handler.js) y una función de invocación que contenga la estructura de parametros : event, context, callback
 
 Por ejemplo : 
 ``` js
 'use strict';
-const express = require('express')
-const sls = require('serverless-http')
-const app = express()
 
-const IS_OFFLINE = eval(process.env.IS_OFFLINE);
+const EventConstant = require('./event/event.constant');
+const EventFactory = require('./event/event.factory');
+const EventService = require('./event/event.service');
 
-app.get('/', async (req, res, next) => {
-    console.log('info', '[APP EXPRESS] hello...' );
-    console.log('info', '[*] IS_OFFLINE : '+ IS_OFFLINE);
+exports.createEvent = (event, context, callback) => {
+    console.log('info', '[createEvent] ...' );
 
-    res.status(200).send('Hello World!' + new Date().toTimeString())
-})
+    let hello = "Hello World!" + new Date().toTimeString();
+    let payload = { hello : hello }
 
-module.exports.server = sls(app)
+    let eventService = new EventService();
+    
+    const params_body = {
+        message_factory: EventFactory.createEvent('CREATE Custom Event',EventConstant.EVENT_TYPE.CREATE,'','acme',0,payload),
+        message_service: eventService.create('UPDATE Custom Event',EventConstant.EVENT_TYPE.UPDATE,'','acme',0)
+    };
+
+    const response = {
+        statusCode: 200,
+        body: JSON.stringify({
+            params_body
+        }),
+      };
+    
+    callback(null, response);
+
 };
-
 ```
-
-En este manejador se pinta información con detalle del tipo de evento que se esta ejecutando en el manejador , el mensaje de "Hello World con la hora de invocación" y se devuelve como petición REST 200.
-
-Además se esta mostrando el valor de la variable de entorno que indica que se esta ejecutando en modo OFFLINE (IS_OFFLINE)
-
 
 Posteriormente mapear su invocación en el fichero : serverless.yml
 
 ```js
 service: 
-  name: demo-nodejs-hello-express-serverless
+  name: demo-nodejs-event-driven-serverless
 
 custom:
   serverless-offline:
@@ -226,20 +199,17 @@ provider:
   runtime: nodejs8.10
 
 functions:
-  app:
-    handler: src/app.server
+
+  event:
+    handler: src/handler.createEvent
     events:
-      - http: # this is an API Gateway HTTP event trigger
-          path: /
-          method: ANY
-          cors: true
-      - http: # all routes get proxied to the Express router
-          path: /{proxy+}
-          method: ANY
-          cors: true    
+      - http:
+          path: create-event
+          method: get        
 
 plugins:
   - serverless-offline
+
 ```
 
 ### Ejecutar el proyecto
@@ -256,30 +226,34 @@ $ npm run start
 
 Se debería e ver algo como esto
 ``` bash
-cross-env-shell NODE_ENV=local "sls offline start"
-
 Serverless: Starting Offline: undefined/undefined.
 
-Serverless: Routes for app:
-Serverless: ANY /
-Serverless: ANY /{proxy*}
+Serverless: Routes for event:
+Serverless: GET /create-event
 
 Serverless: Offline listening on http://localhost:3000
 ```
 
-El proyecto quedaría listo para usarse
+Se puede ejecutar algo como lo siguiente
+http://localhost:3000/create-event
 
-### Ejemplo Práctico : "Hello World!"
 
-Se puede probar invocando una URL como la sigueinte
-
-GET http://localhost:3000/
-
-Se puede observar una respuesta como la siguiente
-``` js
-Hello World!21:08:47 GMT+0100 (Hora estándar romance)
+se puede observar una respuesta como la siguiente
+``` bash
+{
+    "params_body": {
+        "message_factory": {
+            "eventId": "2a0f11c0-3048-11e9-ad3a-fbb2e79559e0",
+            "parentEventId": "",
+            "eventName": "CREATE Custom Event",
+            "eventType": "CREATE",
+            "author": "acme",
+            "createDate": "2019-02-14T11:03:31.292Z",
+            "expiration": 0,
+            "payload": {
+                "hello": "Hello World!12:03:31 GMT+0100 (Hora estándar romance)"
+            }
+        }
+    }
+}
 ```
-
-Cualquier otra opción sera bloqueada por seguridad
-
-Revisar tambien los logs de la consola

@@ -80,7 +80,7 @@ Añadir al fichero 'package.json':
 
 ``` js
 "scripts": {
-    "clean": "rm -rf package-lock.json && npm install",
+    "clean": "rm -rf package-lock.json .serverless/ && npm install",
     "node:version": "echo 'nodejs version: ' && node -v "
   },
 ```
