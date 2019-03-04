@@ -60,7 +60,7 @@ o
 serverless
 ```
 
-## Configuración del protecto para arrancar serverless-offline
+## Configuración del proyecto para arrancar serverless-offline
 
 
 Añadir tareas para su uso en el mismo fichero
@@ -76,4 +76,11 @@ Añadir tareas para su uso en el mismo fichero
 
 ``` bash
 npm run start
+```
+
+
+Añadir la referencia al fichero serverless
+``` bash
+plugins:
+  - serverless-offline #serverless-offline needs to be last in the list
 ```
