@@ -23,6 +23,8 @@ $ docker pull localstack/localstack
 $ docker run -it -e LOCALSTACK_HOSTNAME="localhost" -p 8080:8080 -p 443:443 -p 4567-4583:4567-4583 -p 4590-4593:4590-4593 -v "/private/var/folders/22/v0pf_r7x7tj6dyn5w3ysx58r0000gp/T/localstack:/tmp/localstack" -v "/var/run/docker.sock:/var/run/docker.sock" -e DOCKER_HOST="unix:///var/run/docker.sock" -e HOST_TMP_FOLDER="/private/var/folders/22/v0pf_r7x7tj6dyn5w3ysx58r0000gp/T/localstack" --name localstack localstack/localstack
 ```
 
+docker run -e LOCALSTACK_HOSTNAME="localhost" -p 8080:8080 -p 443:443 -p 4567-4583:4567-4583 -p 4590-4593:4590-4593 --name localstack localstack/localstack
+
 Gestión de contenedor 'localstack':
 
 ``` bash
